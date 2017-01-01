@@ -18,12 +18,12 @@ pub struct PvOutput<'a> {
 pub struct Status<'a> {
     date: &'a str,
     time: &'a str,
-    v1: &'a str, // Energy generation
-    v2: &'a str, // Power generation
-    v3: &'a str, // Energy consumption
-    v4: &'a str, // Power consumption
-    v5: &'a str, // Temperature
-    v6: &'a str, // Voltage
+    v1: Option<&'a str>, // Energy generation
+    v2: Option<&'a str>, // Power generation
+    v3: Option<&'a str>, // Energy consumption
+    v4: Option<&'a str>, // Power consumption
+    v5: Option<&'a str>, // Temperature
+    v6: Option<&'a str>, // Voltage
     cumulative: bool // Cumulative
 }
 
@@ -57,6 +57,23 @@ impl<'a> PvOutput<'a> {
     }
 }
 
+impl<'a> Status<'a> {
+
+    pub fn simple_for_v1(date: &'a str, time: &'a str, v1: &'a str) -> Status<'a> {
+        Status {
+            date: date,
+            time: time,
+            v1: Some(v1),
+            v2: None,
+            v3: None,
+            v4: None,
+            v5: None,
+            v6: None,
+            cumulative: true,
+        }
+    }
+}
+
 impl<'a> PvOutputRequest for Status<'a> {
 
     fn request_url(&self) -> &str {
@@ -67,12 +84,12 @@ impl<'a> PvOutputRequest for Status<'a> {
         let mut params = HashMap::new();
         params.insert("d", self.date);
         params.insert("t", self.time);
-        params.insert("v1", self.v1);
-        params.insert("v2", self.v2);
-        params.insert("v3", self.v3);
-        params.insert("v4", self.v4);
-        params.insert("v5", self.v5);
-        params.insert("v6", self.v6);
+        self.v1.and_then(|v| params.insert("v1", v));
+        self.v2.and_then(|v| params.insert("v2", v));
+        self.v3.and_then(|v| params.insert("v3", v));
+        self.v4.and_then(|v| params.insert("v4", v));
+        self.v5.and_then(|v| params.insert("v5", v));
+        self.v6.and_then(|v| params.insert("v6", v));
         params.insert("c1", if self.cumulative { "1" } else { "0" });
         return params;
     }
