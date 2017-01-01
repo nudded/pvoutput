@@ -1,0 +1,8 @@
+[package]
+name = "pvoutput"
+version = "0.1.0"
+authors = ["ubuntu"]
+
+[dependencies]
+reqwest = "0.2.x"
+hyper = { version = "0.9", default-features=false, features=[] }
