@@ -15,21 +15,22 @@ pub struct PvOutput<'a> {
     client: reqwest::Client,
 }
 
-pub struct Status<'a> {
-    date: &'a str,
-    time: &'a str,
-    v1: Option<&'a str>, // Energy generation
-    v2: Option<&'a str>, // Power generation
-    v3: Option<&'a str>, // Energy consumption
-    v4: Option<&'a str>, // Power consumption
-    v5: Option<&'a str>, // Temperature
-    v6: Option<&'a str>, // Voltage
+#[derive(Debug)]
+pub struct Status {
+    date: String,
+    time: String,
+    v1: Option<String>, // Energy generation
+    v2: Option<String>, // Power generation
+    v3: Option<String>, // Energy consumption
+    v4: Option<String>, // Power consumption
+    v5: Option<String>, // Temperature
+    v6: Option<String>, // Voltage
     cumulative: bool // Cumulative
 }
 
 pub trait PvOutputRequest {
     fn request_url(&self) -> &str;
-    fn parameters(&self) -> HashMap<&str, &str>;
+    fn parameters(self) -> HashMap<&'static str, String>;
 }
 
 impl<'a> PvOutput<'a> {
@@ -42,7 +43,7 @@ impl<'a> PvOutput<'a> {
         }
     }
 
-    pub fn send_request(&self, request: &PvOutputRequest) -> Result<Response> {
+    pub fn send_request<T: PvOutputRequest>(&self, request: T) -> Result<Response> {
         self.client.post(request.request_url()).
             headers(self.headers()).
             json(&request.parameters()).
@@ -57,14 +58,14 @@ impl<'a> PvOutput<'a> {
     }
 }
 
-impl<'a> Status<'a> {
+impl Status {
 
-    pub fn simple_for_v1(date: &'a str, time: &'a str, v1: &'a str) -> Status<'a> {
+    pub fn simple_for_v2(date: String, time: String, v2: String) -> Status {
         Status {
             date: date,
             time: time,
-            v1: Some(v1),
-            v2: None,
+            v1: None,
+            v2: Some(v2),
             v3: None,
             v4: None,
             v5: None,
@@ -74,13 +75,13 @@ impl<'a> Status<'a> {
     }
 }
 
-impl<'a> PvOutputRequest for Status<'a> {
+impl PvOutputRequest for Status {
 
     fn request_url(&self) -> &str {
         "http://pvoutput.org/service/r2/addstatus.jsp"
     }
 
-    fn parameters(&self) -> HashMap<&str,&str> {
+    fn parameters(self) -> HashMap<&'static str,String> {
         let mut params = HashMap::new();
         params.insert("d", self.date);
         params.insert("t", self.time);
@@ -90,7 +91,7 @@ impl<'a> PvOutputRequest for Status<'a> {
         self.v4.and_then(|v| params.insert("v4", v));
         self.v5.and_then(|v| params.insert("v5", v));
         self.v6.and_then(|v| params.insert("v6", v));
-        params.insert("c1", if self.cumulative { "1" } else { "0" });
+        params.insert("c1", if self.cumulative { "1".to_string() } else { "0".to_string() });
         return params;
     }
 }
